@@ -369,6 +369,7 @@ typedef struct _zend_internal_function_info
 struct _zend_op_array
 {
 	/* Common elements */
+	// 普通函数或类成员方法对应的opcodes快速访问时使用的字段
 	zend_uchar type;
 	zend_uchar arg_flags[3]; /* bitset of arg_info.pass_by_reference */
 	uint32_t fn_flags;
@@ -383,10 +384,14 @@ struct _zend_op_array
 	uint32_t *refcount;
 
 	uint32_t last;
-	zend_op *opcodes;
+	zend_op *opcodes; // opcode指令数组
 
+	// PHP代码里定义的变量数：op_type为IS_CV的变量，不含IS_TMP_VAR、IS_VAR的
+	// 编译前此值为0，然后发现一个新变量这个值就加1
 	int last_var;
-	uint32_t T;
+	uint32_t T; // 临时变量数:op_type为IS_TMP_VAR、IS_VAR的变量
+	// PHP变量名数组
+	// 这个数组在ast编译期间配合last_var用来确定各个变量的编号，非常重要的一步操作
 	zend_string **vars;
 
 	int last_live_range;
@@ -395,7 +400,7 @@ struct _zend_op_array
 	zend_try_catch_element *try_catch_array;
 
 	/* static variables support */
-	HashTable *static_variables; // 保存静态变量
+	HashTable *static_variables; // 静态变量符号表:通过static声明的
 
 	zend_string *filename;
 	uint32_t line_start;
@@ -403,11 +408,11 @@ struct _zend_op_array
 	zend_string *doc_comment;
 	uint32_t early_binding; /* the linked list of delayed declarations */
 
-	int last_literal;
-	zval *literals;
+	int last_literal; // 字面量数量
+	zval *literals;   // 字面量(常量)数组，这些都是在PHP代码定义的一些值
 
-	int cache_size;
-	void **run_time_cache;
+	int cache_size;		   // 运行时缓存数组大小
+	void **run_time_cache; // 运行时缓存，主要用于缓存一些znode_op以便于快速获取数据，后面单独介绍这个机制
 
 	void *reserved[ZEND_MAX_RESERVED_RESOURCES];
 };
