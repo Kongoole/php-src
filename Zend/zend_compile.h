@@ -72,7 +72,7 @@ typedef struct _zend_op zend_op;
 #define ZEND_EX_USE_LITERALS 1
 #define ZEND_EX_USE_RUN_TIME_CACHE 1
 #endif
-
+// 操作数结构
 typedef union _znode_op {
 	uint32_t constant;
 	uint32_t var;
@@ -149,19 +149,19 @@ void zend_eval_const_expr(zend_ast **ast_ptr);
 void zend_const_expr_to_zval(zval *result, zend_ast *ast);
 
 typedef int (*user_opcode_handler_t)(zend_execute_data *execute_data);
-
+// 指令结构
 struct _zend_op
 {
-	const void *handler;
-	znode_op op1;
-	znode_op op2;
-	znode_op result;
+	const void *handler; // 指令执行handler
+	znode_op op1;		 // 操作数1
+	znode_op op2;		 // 操作数2
+	znode_op result;	 // 返回值
 	uint32_t extended_value;
 	uint32_t lineno;
-	zend_uchar opcode;
-	zend_uchar op1_type;
-	zend_uchar op2_type;
-	zend_uchar result_type;
+	zend_uchar opcode;		// opcode指令
+	zend_uchar op1_type;	// 操作数1类型
+	zend_uchar op2_type;	// 操作数2类型
+	zend_uchar result_type; // 返回值类型
 };
 
 typedef struct _zend_brk_cont_element
@@ -738,7 +738,7 @@ struct _zend_execute_data
 	} while (0)
 
 #endif
-
+// 操作数类型
 #define IS_CONST (1 << 0)
 #define IS_TMP_VAR (1 << 1)
 #define IS_VAR (1 << 2)
