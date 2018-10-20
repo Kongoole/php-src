@@ -169,7 +169,7 @@ static zend_always_inline void zend_hash_check_init(HashTable *ht, int packed)
 
 static const uint32_t uninitialized_bucket[-HT_MIN_MASK] =
 	{HT_INVALID_IDX, HT_INVALID_IDX};
-
+// 数组初始化
 ZEND_API void ZEND_FASTCALL _zend_hash_init(HashTable *ht, uint32_t nSize, dtor_func_t pDestructor, zend_bool persistent ZEND_FILE_LINE_DC)
 {
 	GC_REFCOUNT(ht) = 1;
@@ -538,7 +538,7 @@ static zend_always_inline Bucket *zend_hash_index_find_bucket(const HashTable *h
 	}
 	return NULL;
 }
-
+// 数组插入
 static zend_always_inline zval *_zend_hash_add_or_update_i(HashTable *ht, zend_string *key, zval *pData, uint32_t flag ZEND_FILE_LINE_DC)
 {
 	zend_ulong h;
@@ -588,7 +588,7 @@ static zend_always_inline zval *_zend_hash_add_or_update_i(HashTable *ht, zend_s
 			return data;
 		}
 	}
-
+	// 检查是否需要扩容
 	ZEND_HASH_IF_FULL_DO_RESIZE(ht);		/* If the Hash table is full, resize it */
 
 add_to_hash:
@@ -608,8 +608,8 @@ add_to_hash:
 	p->h = h = ZSTR_H(key);
 	ZVAL_COPY_VALUE(&p->val, pData);
 	nIndex = h | ht->nTableMask;
-	Z_NEXT(p->val) = HT_HASH(ht, nIndex);
-	HT_HASH(ht, nIndex) = HT_IDX_TO_HASH(idx);
+	Z_NEXT(p->val) = HT_HASH(ht, nIndex); // 旧的Bucket索引（初始值-1）保存到插入的元素中
+	HT_HASH(ht, nIndex) = HT_IDX_TO_HASH(idx); // 新元素数组存储位置更新到映射表
 
 	return &p->val;
 }
@@ -844,32 +844,32 @@ ZEND_API zval* ZEND_FASTCALL _zend_hash_next_index_insert_new(HashTable *ht, zva
 {
 	return _zend_hash_index_add_or_update_i(ht, ht->nNextFreeElement, pData, HASH_ADD | HASH_ADD_NEW | HASH_ADD_NEXT ZEND_FILE_LINE_RELAY_CC);
 }
-
+// 数组扩容
 static void ZEND_FASTCALL zend_hash_do_resize(HashTable *ht)
 {
 
 	IS_CONSISTENT(ht);
 	HT_ASSERT_RC1(ht);
-
+	
 	if (ht->nNumUsed > ht->nNumOfElements + (ht->nNumOfElements >> 5)) { /* additional term is there to amortize the cost of compaction */
-		zend_hash_rehash(ht);
+		zend_hash_rehash(ht); // nNumUsed达到阈值触发重建索引数组操作
 	} else if (ht->nTableSize < HT_MAX_SIZE) {	/* Let's double the table size */
 		void *new_data, *old_data = HT_GET_DATA_ADDR(ht);
-		uint32_t nSize = ht->nTableSize + ht->nTableSize;
+		uint32_t nSize = ht->nTableSize + ht->nTableSize; // 扩大为2倍
 		Bucket *old_buckets = ht->arData;
 
-		new_data = pemalloc(HT_SIZE_EX(nSize, -nSize), ht->u.flags & HASH_FLAG_PERSISTENT);
+		new_data = pemalloc(HT_SIZE_EX(nSize, -nSize), ht->u.flags & HASH_FLAG_PERSISTENT); // 新分配arData空间
 		ht->nTableSize = nSize;
 		ht->nTableMask = -ht->nTableSize;
-		HT_SET_DATA_ADDR(ht, new_data);
-		memcpy(ht->arData, old_buckets, sizeof(Bucket) * ht->nNumUsed);
-		pefree(old_data, ht->u.flags & HASH_FLAG_PERSISTENT);
-		zend_hash_rehash(ht);
+		HT_SET_DATA_ADDR(ht, new_data); // 将arData指针偏移到Bucket数组起始位置
+		memcpy(ht->arData, old_buckets, sizeof(Bucket) * ht->nNumUsed); // 将旧的Bucket数组复制到新空间，不包括中间映射表
+		pefree(old_data, ht->u.flags & HASH_FLAG_PERSISTENT); // 释放旧空间
+		zend_hash_rehash(ht); // 重建索引数组：映射表
 	} else {
 		zend_error_noreturn(E_ERROR, "Possible integer overflow in memory allocation (%u * %zu + %zu)", ht->nTableSize * 2, sizeof(Bucket) + sizeof(uint32_t), sizeof(Bucket));
 	}
 }
-
+// 重建索引数组：映射表
 ZEND_API int ZEND_FASTCALL zend_hash_rehash(HashTable *ht)
 {
 	Bucket *p;
@@ -888,7 +888,7 @@ ZEND_API int ZEND_FASTCALL zend_hash_rehash(HashTable *ht)
 	HT_HASH_RESET(ht);
 	i = 0;
 	p = ht->arData;
-	if (HT_IS_WITHOUT_HOLES(ht)) {
+	if (HT_IS_WITHOUT_HOLES(ht)) { // 没有已删除的元素
 		do {
 			nIndex = p->h | ht->nTableMask;
 			Z_NEXT(p->val) = HT_HASH(ht, nIndex);
@@ -922,8 +922,8 @@ ZEND_API int ZEND_FASTCALL zend_hash_rehash(HashTable *ht)
 					uint32_t iter_pos = zend_hash_iterators_lower_pos(ht, 0);
 
 					while (++i < ht->nNumUsed) {
-						p++;
-						if (EXPECTED(Z_TYPE_INFO(p->val) != IS_UNDEF)) {
+						p++; // p依次标记所有元素，包括有效的和删除的
+						if (EXPECTED(Z_TYPE_INFO(p->val) != IS_UNDEF)) { // 如果p标记到有效元素，则复制给q指向的位置，q++
 							ZVAL_COPY_VALUE(&q->val, &p->val);
 							q->h = p->h;
 							nIndex = q->h | ht->nTableMask;
@@ -937,7 +937,7 @@ ZEND_API int ZEND_FASTCALL zend_hash_rehash(HashTable *ht)
 								zend_hash_iterators_update(ht, i, j);
 								iter_pos = zend_hash_iterators_lower_pos(ht, iter_pos + 1);
 							}
-							q++;
+							q++; // q仅标记有效的元素
 							j++;
 						}
 					}

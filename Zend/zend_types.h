@@ -158,14 +158,14 @@ typedef uintptr_t zend_type;
 
 typedef union _zend_value {
 	zend_long         lval;				/* long value */
-	double            dval;				/* double value */
+	double            dval;				/* double value */ // 以下全是指针
 	zend_refcounted  *counted;
 	zend_string      *str;
 	zend_array       *arr;
 	zend_object      *obj;
 	zend_resource    *res;
 	zend_reference   *ref;
-	zend_ast_ref     *ast;
+	zend_ast_ref     *ast; // 以下三个供内核使用
 	zval             *zv;
 	void             *ptr;
 	zend_class_entry *ce;
@@ -180,7 +180,7 @@ struct _zval_struct {
 	zend_value        value;			/* value */
 	union {
 		struct {
-			ZEND_ENDIAN_LOHI_4(
+			ZEND_ENDIAN_LOHI_4( // 解决字节序问题
 				zend_uchar    type,			/* active type */
 				zend_uchar    type_flags,
 				zend_uchar    const_flags,
@@ -219,10 +219,10 @@ struct _zend_refcounted {
 };
 
 struct _zend_string {
-	zend_refcounted_h gc;
+	zend_refcounted_h gc; // 变量的引用计数信息，用于内存管理
 	zend_ulong        h;                /* hash value */
 	size_t            len;
-	char              val[1];
+	char              val[1]; // 变长数组
 };
 
 typedef struct _Bucket {
@@ -301,11 +301,11 @@ struct _zend_array {
 	HT_HASH_EX((ht)->arData, idx)
 
 #define HT_HASH_SIZE(nTableMask) \
-	(((size_t)(uint32_t)-(int32_t)(nTableMask)) * sizeof(uint32_t))
+	(((size_t)(uint32_t)-(int32_t)(nTableMask)) * sizeof(uint32_t)) // 中间映射表内存大小
 #define HT_DATA_SIZE(nTableSize) \
-	((size_t)(nTableSize) * sizeof(Bucket))
+	((size_t)(nTableSize) * sizeof(Bucket)) // 元素数组内存大小
 #define HT_SIZE_EX(nTableSize, nTableMask) \
-	(HT_DATA_SIZE((nTableSize)) + HT_HASH_SIZE((nTableMask)))
+	(HT_DATA_SIZE((nTableSize)) + HT_HASH_SIZE((nTableMask))) // 分配给arData的内存大小
 #define HT_SIZE(ht) \
 	HT_SIZE_EX((ht)->nTableSize, (ht)->nTableMask)
 #define HT_USED_SIZE(ht) \
@@ -318,7 +318,7 @@ struct _zend_array {
 	} while (0)
 #define HT_HASH_TO_BUCKET(ht, idx) \
 	HT_HASH_TO_BUCKET_EX((ht)->arData, idx)
-
+// 通过将整个数组（中间映射表+Bucket数组）的位置向前移动nTableMask个单位，使arData指向Bucket数组的第一个位置
 #define HT_SET_DATA_ADDR(ht, ptr) do { \
 		(ht)->arData = (Bucket*)(((char*)(ptr)) + HT_HASH_SIZE((ht)->nTableMask)); \
 	} while (0)
@@ -359,7 +359,7 @@ struct _zend_ast_ref {
 };
 
 /* regular data types */
-#define IS_UNDEF					0
+#define IS_UNDEF					0 // 该类型的zval不包含数据，用于内存管理
 #define IS_NULL						1
 #define IS_FALSE					2
 #define IS_TRUE						3

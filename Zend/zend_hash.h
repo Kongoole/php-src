@@ -46,7 +46,7 @@
 #define HT_IS_PACKED(ht) \
 	(((ht)->u.flags & HASH_FLAG_PACKED) != 0)
 
-#define HT_IS_WITHOUT_HOLES(ht) \
+#define HT_IS_WITHOUT_HOLES(ht) \ // 没有已删除的元素
 	((ht)->nNumUsed == (ht)->nNumOfElements)
 
 #define HT_HAS_STATIC_KEYS_ONLY(ht) \

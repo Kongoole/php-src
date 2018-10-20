@@ -463,7 +463,7 @@ try_again:
 		case IS_STRING:
 			{
 				zend_string *str = Z_STR_P(op);
-
+				// 空字符串或"0"为false
 				if (ZSTR_LEN(str) == 0
 					|| (ZSTR_LEN(str) == 1 && ZSTR_VAL(str)[0] == '0')) {
 					ZVAL_FALSE(op);
@@ -474,7 +474,7 @@ try_again:
 			}
 			break;
 		case IS_ARRAY:
-			tmp = (zend_hash_num_elements(Z_ARRVAL_P(op))?1:0);
+			tmp = (zend_hash_num_elements(Z_ARRVAL_P(op))?1:0); // 数组中有效元素个数
 			zval_ptr_dtor(op);
 			ZVAL_BOOL(op, tmp);
 			break;
@@ -550,11 +550,11 @@ try_again:
 			break;
 		}
 		case IS_ARRAY:
-			zend_error(E_NOTICE, "Array to string conversion");
+			zend_error(E_NOTICE, "Array to string conversion"); // 报Notice错误
 			zval_ptr_dtor(op);
 			ZVAL_NEW_STR(op, zend_string_init("Array", sizeof("Array")-1, 0));
 			break;
-		case IS_OBJECT: {
+		case IS_OBJECT: { // 不能转换，会报错
 			zval dst;
 
 			convert_object_to_type(op, &dst, IS_STRING, convert_to_string);
