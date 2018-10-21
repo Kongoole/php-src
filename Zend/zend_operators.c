@@ -639,7 +639,7 @@ try_again:
 			zend_unwrap_reference(op);
 			goto try_again;
 		default:
-			convert_scalar_to_array(op);
+			convert_scalar_to_array(op); // 标量转数组, (array)$scalarVal = array[$scalarVal];
 			break;
 	}
 }

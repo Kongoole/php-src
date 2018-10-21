@@ -463,8 +463,8 @@ static zend_always_inline zend_uchar zval_get_type(const zval* pz) {
 
 /* zval.u1.v.type_flags */
 #define IS_TYPE_CONSTANT			(1<<0)
-#define IS_TYPE_REFCOUNTED			(1<<2)
-#define IS_TYPE_COPYABLE			(1<<4)
+#define IS_TYPE_REFCOUNTED			(1<<2) // 是否支持引用计数，目前为string array object resource reference，排除simple types & immutatble array & interned string
+#define IS_TYPE_COPYABLE			(1<<4) // 是否支持写时复制，目前为string array
 
 /* extended types */
 #define IS_INTERNED_STRING_EX		IS_STRING

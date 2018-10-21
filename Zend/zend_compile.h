@@ -442,7 +442,7 @@ typedef enum _zend_call_kind {
 	ZEND_CALL_TOP_FUNCTION,		/* direct VM call to function from external C code */
 	ZEND_CALL_TOP_CODE			/* direct VM call to "main" code from external C code */
 } zend_call_kind;
-
+// 运行期间最重要最关键的结构，局部变量的分配、保存执行位置、调用上线文切换
 struct _zend_execute_data {
 	const zend_op       *opline;           /* executed opline                */
 	zend_execute_data   *call;             /* current call                   */
