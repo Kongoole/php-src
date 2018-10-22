@@ -676,14 +676,18 @@ static int _php_filter_validate_ipv4(char *str, size_t str_len, int *ip) /* {{{ 
 
 static int _php_filter_validate_ipv6(char *str, size_t str_len) /* {{{ */
 {
-	int compressed = 0;
+	int compressed = 0; // 是否压缩过
+	// An IPv6 address is represented as eight groups of four hexadecimal digits, 
+	// each group representing 16 bits (two octets, a group sometimes also called a hextet[6][7]). 
+	// The groups are separated by colons (:).
+	// block表示分割的组数
 	int blocks = 0;
 	int n;
 	char *ipv4;
 	char *end;
 	int ip4elm[4];
-	char *s = str;
-
+	char *s = str; // s指向地址字符串的起始位置
+	// 检查是否存在:符号
 	if (!memchr(str, ':', str_len)) {
 		return 0;
 	}
@@ -691,35 +695,41 @@ static int _php_filter_validate_ipv6(char *str, size_t str_len) /* {{{ */
 	/* check for bundled IPv4 */
 	ipv4 = memchr(str, '.', str_len);
 	if (ipv4) {
- 		while (ipv4 > str && *(ipv4-1) != ':') {
+ 		while (ipv4 > str && *(ipv4-1) != ':') { //  ipv4指针移动到ipv4地址字符串起始处
 			ipv4--;
 		}
-
+		// 验证ipv4地址的合法性，如果合法则把ip的每一部分分割成数组存入ip4elm
 		if (!_php_filter_validate_ipv4(ipv4, (str_len - (ipv4 - str)), ip4elm)) {
 			return 0;
 		}
-
+		// 除ipv4外剩下的字符串长度如果小于2，则只有:符号，非法
 		str_len = ipv4 - str; /* length excluding ipv4 */
 		if (str_len < 2) {
 			return 0;
 		}
-
+		//  ipv4之前的两位只能是::
 		if (ipv4[-2] != ':') {
 			/* don't include : before ipv4 unless it's a :: */
 			str_len--;
 		}
-
+		// ipv4一组，前面的::至少是一组
 		blocks = 2;
 	}
-
+	// 剩余字符串，str指向开始，end指向结尾'\0'字符或ipv4的起始字符
 	end = str + str_len;
 
 	while (str < end) {
+		// 如果遇到了分隔符
 		if (*str == ':') {
+			// str向后移动一个单位
+			// 不能以单个:结尾
 			if (++str >= end) {
 				/* cannot end in : without previous : */
 				return 0;
 			}
+			// 如果:后紧跟:
+			// 表示ipv6中有连续的几组只包含0，可被压缩为::
+			// 但该压缩只能进行一次，否则ipv6地址会无法解析
 			if (*str == ':') {
 				if (compressed) {
 					return 0;
@@ -731,11 +741,13 @@ static int _php_filter_validate_ipv6(char *str, size_t str_len) /* {{{ */
 					return (blocks <= 8);
 				}
 			} else if ((str - 1) == s) {
+				// 不能以单个:开始
 				/* dont allow leading : without another : following */
 				return 0;
 			}
 		}
 		n = 0;
+		// 移动str指针直到遇到一个不在0-9a-zA-Z的字符，即分隔符
 		while ((str < end) &&
 		       ((*str >= '0' && *str <= '9') ||
 		        (*str >= 'a' && *str <= 'f') ||
@@ -743,9 +755,12 @@ static int _php_filter_validate_ipv6(char *str, size_t str_len) /* {{{ */
 			n++;
 			str++;
 		}
+		// ipv6的当前部分位数是否合法
+		// ipv6每部分最多4个十六进制，每个十六进制占位4bit，即最大1111
 		if (n < 1 || n > 4) {
 			return 0;
 		}
+		// ipv6最多8组
 		if (++blocks > 8)
 			return 0;
 	}
@@ -763,7 +778,7 @@ void php_filter_validate_ip(PHP_INPUT_FILTER_PARAM_DECL) /* {{{ */
 	int            ip[4];
 	int            mode;
 
-	if (memchr(Z_STRVAL_P(value), ':', Z_STRLEN_P(value))) {
+	if (memchr(Z_STRVAL_P(value), ':', Z_STRLEN_P(value))) { // 在字符串中寻找:
 		mode = FORMAT_IPV6;
 	} else if (memchr(Z_STRVAL_P(value), '.', Z_STRLEN_P(value))) {
 		mode = FORMAT_IPV4;
