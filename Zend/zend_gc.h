@@ -143,13 +143,13 @@ END_EXTERN_C()
 	((GC_TYPE_INFO(ref) & \
 		(GC_INFO_MASK | (GC_COLLECTABLE << GC_FLAGS_SHIFT))) == \
 	(GC_COLLECTABLE << GC_FLAGS_SHIFT))
-
+// 回收垃圾
 static zend_always_inline void gc_check_possible_root(zend_refcounted *ref)
 {
-	if (GC_TYPE(ref) == IS_REFERENCE) {
+	if (GC_TYPE(ref) == IS_REFERENCE) { // 如果是引用类型
 		zval *zv = &((zend_reference*)ref)->val;
 
-		if (!Z_REFCOUNTED_P(zv)) {
+		if (!Z_REFCOUNTED_P(zv)) { 
 			return;
 		}
 		ref = Z_COUNTED_P(zv);

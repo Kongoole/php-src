@@ -159,7 +159,7 @@ typedef uintptr_t zend_type;
 typedef union _zend_value {
 	zend_long         lval;				/* long value */
 	double            dval;				/* double value */ // 以下全是指针
-	zend_refcounted  *counted;
+	zend_refcounted  *counted; // 引用计数次数结构体，包括次数，状态等信息
 	zend_string      *str;
 	zend_array       *arr;
 	zend_object      *obj;
@@ -182,6 +182,7 @@ struct _zval_struct {
 		struct {
 			ZEND_ENDIAN_LOHI_4( // 解决字节序问题
 				zend_uchar    type,			/* active type */
+				// // IS_TYPE_REFCOUNTED - 是否支持引用计数
 				zend_uchar    type_flags,
 				zend_uchar    const_flags,
 				zend_uchar    reserved)	    /* call info for EX(This) */
@@ -206,7 +207,7 @@ typedef struct _zend_refcounted_h {
 	union {
 		struct {
 			ZEND_ENDIAN_LOHI_3(
-				zend_uchar    type,
+				zend_uchar    type, // 
 				zend_uchar    flags,    /* used for strings & objects */
 				uint16_t      gc_info)  /* keeps GC root number (or 0) and color */
 		} v;

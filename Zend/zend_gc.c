@@ -273,12 +273,12 @@ ZEND_API void ZEND_FASTCALL gc_possible_root(zend_refcounted *ref)
 	GC_BENCH_INC(zval_possible_root);
 
 	newRoot = GC_G(unused);
-	if (newRoot) {
+	if (newRoot) { // unused中有可用的
 		GC_G(unused) = newRoot->prev;
-	} else if (GC_G(first_unused) != GC_G(last_unused)) {
+	} else if (GC_G(first_unused) != GC_G(last_unused)) { // buf中有可用的
 		newRoot = GC_G(first_unused);
 		GC_G(first_unused)++;
-	} else {
+	} else { // 缓存区满，启动垃圾鉴定、回收程序
 		if (!GC_G(gc_enabled)) {
 			return;
 		}
@@ -308,7 +308,7 @@ ZEND_API void ZEND_FASTCALL gc_possible_root(zend_refcounted *ref)
 	GC_TRACE_SET_COLOR(ref, GC_PURPLE);
 	GC_INFO(ref) = (newRoot - GC_G(buf)) | GC_PURPLE;
 	newRoot->ref = ref;
-
+	// 插入roots双链表
 	newRoot->next = GC_G(roots).next;
 	newRoot->prev = &GC_G(roots);
 	GC_G(roots).next->prev = newRoot;
@@ -338,7 +338,7 @@ static zend_always_inline gc_root_buffer* gc_find_additional_buffer(zend_refcoun
 	ZEND_ASSERT(0);
 	return NULL;
 }
-
+// 从垃圾回收器中移除
 ZEND_API void ZEND_FASTCALL gc_remove_from_buffer(zend_refcounted *ref)
 {
 	gc_root_buffer *root;
@@ -1040,7 +1040,7 @@ tail_call:
 		goto tail_call;
 	}
 }
-
+// buf缓存区满了则执行该垃圾回收程序
 ZEND_API int zend_gc_collect_cycles(void)
 {
 	int count = 0;

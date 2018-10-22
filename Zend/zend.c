@@ -92,13 +92,19 @@ static ZEND_INI_MH(OnUpdateErrorReporting) /* {{{ */
 	return SUCCESS;
 }
 /* }}} */
-
+// OnUpdateGCEnabled被设置为zend_ini_entry.on_modify
+// 参考 http://www.phpinternalsbook.com/php7/extensions_design/ini_settings.html
+// on_modify() is a handler called whenever the current setting’s value is modified, 
+// like f.e using a call to ini_set() (but not only). We’ll focus deeper on on_modify() later, 
+// but think of it as being a validator function (f.e if the setting is expected to represent an integer, 
+// you may validate the values you’ll be given against integers). 
+// It also serve as a memory bridge to update global values, we’ll get back on that later as well.
 static ZEND_INI_MH(OnUpdateGCEnabled) /* {{{ */
 {
 	OnUpdateBool(entry, new_value, mh_arg1, mh_arg2, mh_arg3, stage);
 
 	if (GC_G(gc_enabled)) {
-		gc_init();
+		gc_init(); // 初始化垃圾回收器
 	}
 
 	return SUCCESS;
@@ -775,7 +781,7 @@ int zend_startup(zend_utility_functions *utility_functions, char **extensions) /
 	zend_throw_exception_hook = NULL;
 
 	/* Set up the default garbage collection implementation. */
-	gc_collect_cycles = zend_gc_collect_cycles;
+	gc_collect_cycles = _cycles;
 
 	zend_init_opcodes_handlers();
 

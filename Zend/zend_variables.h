@@ -40,14 +40,14 @@ static zend_always_inline void _zval_ptr_dtor_nogc(zval *zval_ptr ZEND_FILE_LINE
 		_zval_dtor_func(Z_COUNTED_P(zval_ptr) ZEND_FILE_LINE_RELAY_CC);
 	}
 }
-
+// 销毁一个zval时调用此函数处理
 static zend_always_inline void i_zval_ptr_dtor(zval *zval_ptr ZEND_FILE_LINE_DC)
 {
-	if (Z_REFCOUNTED_P(zval_ptr)) {
+	if (Z_REFCOUNTED_P(zval_ptr)) { // 是否支持引用计数
 		zend_refcounted *ref = Z_COUNTED_P(zval_ptr);
-		if (!--GC_REFCOUNT(ref)) {
+		if (!--GC_REFCOUNT(ref)) { // refcount减1后，引用计数为0，不是垃圾，可回收
 			_zval_dtor_func(ref ZEND_FILE_LINE_RELAY_CC);
-		} else {
+		} else { // 可能是垃圾，被垃圾回收器收集
 			gc_check_possible_root(ref);
 		}
 	}
