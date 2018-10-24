@@ -384,13 +384,13 @@ struct _zend_op_array
 	uint32_t *refcount;
 
 	uint32_t last;
-	zend_op *opcodes; // opcode指令数组
+	zend_op *opcodes; // opcode指令数组，每个元素为一个_zend_op结构体
 
 	// PHP代码里定义的变量数：op_type为IS_CV的变量，不含IS_TMP_VAR、IS_VAR的
 	// 编译前此值为0，然后发现一个新变量这个值就加1
 	int last_var;
 	uint32_t T; // 临时变量数:op_type为IS_TMP_VAR、IS_VAR的变量
-	// PHP变量名数组
+	// PHP变量名数组，每个元素为一个_zend_string类型的指针
 	// 这个数组在ast编译期间配合last_var用来确定各个变量的编号，非常重要的一步操作
 	zend_string **vars;
 
