@@ -113,21 +113,21 @@ typedef struct _zend_trait_alias {
 } zend_trait_alias;
 
 struct _zend_class_entry {
-	char type;
-	zend_string *name;
-	struct _zend_class_entry *parent;
+	char type; // 类的类型:内部类ZEND_INTERNAL_CLASS(1)、用户自定义类
+	zend_string *name; // 类名,PHP类不区分大小写,统一为小写
+	struct _zend_class_entry *parent; 
 	int refcount;
-	uint32_t ce_flags;
+	uint32_t ce_flags; // 类掩码,如普通类、抽象类、接口,除了这还有别的含义,暂未弄清
 
-	int default_properties_count;
-	int default_static_members_count;
-	zval *default_properties_table;
-	zval *default_static_members_table;
+	int default_properties_count; // 普通属性数,包括public、private
+	int default_static_members_count; // 静态属性数,static
+	zval *default_properties_table; // 普通属性值数组
+	zval *default_static_members_table; // 静态属性值数组
 	zval *static_members_table;
-	HashTable function_table;
-	HashTable properties_info;
-	HashTable constants_table;
-
+	HashTable function_table; // 成员方法哈希表
+	HashTable properties_info; // 成员属性基本信息哈希表,key为成员名,value为zend_property_info
+	HashTable constants_table; // 常量哈希表,通过constant定义的
+	// 以下是构造函授、析构函数、魔术方法的指针
 	union _zend_function *constructor;
 	union _zend_function *destructor;
 	union _zend_function *clone;
@@ -144,6 +144,8 @@ struct _zend_class_entry {
 
 	zend_class_iterator_funcs iterator_funcs;
 
+	//自定义的钩子函数,通常是定义内部类时使用,可以灵活的进行一些个性化的操作
+	//用户自定义类不会用到,暂时忽略即可
 	/* handlers */
 	zend_object* (*create_object)(zend_class_entry *class_type);
 	zend_object_iterator *(*get_iterator)(zend_class_entry *ce, zval *object, int by_ref);

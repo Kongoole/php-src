@@ -338,8 +338,8 @@ struct _zend_object {
 	uint32_t          handle; // TODO: may be removed ???
 	zend_class_entry *ce;
 	const zend_object_handlers *handlers;
-	HashTable        *properties;
-	zval              properties_table[1];
+	HashTable        *properties; // 静态声明的属性
+	zval              properties_table[1]; // 动态添加的属性
 };
 
 struct _zend_resource {
