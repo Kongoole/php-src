@@ -477,12 +477,12 @@ static zend_always_inline Bucket *zend_hash_find_bucket(const HashTable *ht, zen
 	uint32_t idx;
 	Bucket *p, *arData;
 
-	h = zend_string_hash_val(key);
+	h = zend_string_hash_val(key); // 计算哈希值
 	arData = ht->arData;
-	nIndex = h | ht->nTableMask;
-	idx = HT_HASH_EX(arData, nIndex);
+	nIndex = h | ht->nTableMask; // 中间映射表索引值
+	idx = HT_HASH_EX(arData, nIndex);  // 底层Bucket数组的索引
 	while (EXPECTED(idx != HT_INVALID_IDX)) {
-		p = HT_HASH_TO_BUCKET_EX(arData, idx);
+		p = HT_HASH_TO_BUCKET_EX(arData, idx); // 从arData地址后移idx位得到的地址处，获取Bucket
 		if (EXPECTED(p->key == key)) { /* check for the same interned string */
 			return p;
 		} else if (EXPECTED(p->h == h) &&
@@ -491,7 +491,7 @@ static zend_always_inline Bucket *zend_hash_find_bucket(const HashTable *ht, zen
 		     EXPECTED(memcmp(ZSTR_VAL(p->key), ZSTR_VAL(key), ZSTR_LEN(key)) == 0)) {
 			return p;
 		}
-		idx = Z_NEXT(p->val);
+		idx = Z_NEXT(p->val); // 如果出现哈希冲突
 	}
 	return NULL;
 }
